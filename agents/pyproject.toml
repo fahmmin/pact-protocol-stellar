@@ -12,3 +12,11 @@ dependencies = [
     "google-genai",
     "python-dotenv",
 ]
+
+[project.optional-dependencies]
+dev = ["pytest", "httpx"]
+pro = ["apscheduler"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", ".."]

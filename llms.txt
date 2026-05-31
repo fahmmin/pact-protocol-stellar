@@ -1,0 +1,23 @@
+# Pact Protocol (repository)
+
+> Stellar/Soroban port of Pact Protocol — trustless creator–brand deals with AI agents, DealVault escrow, and PactTrade markets.
+
+This file lives at the monorepo root for GitHub and documentation crawlers. The production web app serves richer context at `/llms.txt` and `/llms-full.txt` on the deployed frontend.
+
+## Start here
+
+- [README](README.md): Overview, architecture, testnet contracts, setup
+- [CLAUDE.md](CLAUDE.md): Agent/developer brief with deployed addresses
+- [Frontend llms.txt](frontend/public/llms.txt): Web-facing LLM index
+- [GitHub](https://github.com/fahmmin/pact-protocol-stellar)
+
+## Monorepo
+
+- `contracts/` — Soroban Rust smart contracts
+- `agents/` — Python FastAPI AI agent runtime
+- `frontend/` — Next.js 14 UI
+- `specs/` — Protocol specifications
+
+## Network
+
+Stellar **Testnet** — verify contracts on https://stellar.expert/explorer/testnet

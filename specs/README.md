@@ -26,3 +26,14 @@ Source of truth for implementation. Read before writing contract, agent, or fron
 | DealVault | Escrow, lifecycle, settlement |
 | CampaignOracle | Metric results and settlement truth |
 | PactMarket | YES/NO prediction AMM |
+
+## Spec → Code Mapping
+
+| Spec | Primary code |
+|------|----------------|
+| creator-brand-journey.md | `frontend/src/app/(app)/`, `agents/pact/services/orchestration.py` |
+| guideline-lifecycle.md | `frontend/src/components/DealGuidelines.tsx`, ValidationRegistry |
+| manual-verification.md | `agents/pact/api/routers/verification.py`, admin review UI |
+| daily-metric-checks.md | `agents/pact/services/scheduler.py`, KpiPanel |
+| profile-mutability.md | AgentRegistry update fns, profile audit API |
+| prompt-persona-governance.md | `agents/pact/db/repositories/prompts.py`, admin prompts |

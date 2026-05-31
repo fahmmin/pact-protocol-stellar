@@ -1,0 +1,13 @@
+PACT PROTOCOL PRO — COMMERCIAL LICENSE NOTICE
+
+The files under agents/pro/ and frontend/src/features/pro/ constitute
+the "Pro" edition of Pact Protocol.
+
+These modules are included in the repository for transparency and auditability.
+Use in production requires a separate commercial license from the project
+maintainers unless you are an authorized licensee.
+
+The open-source core is licensed under Apache 2.0 (see LICENSE).
+
+For enterprise licensing inquiries, contact the project maintainers via
+GitHub or the security/contact channel listed in SECURITY.md.

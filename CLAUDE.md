@@ -1,33 +1,25 @@
 # PACT PROTOCOL STELLAR — MASTER BRIEF
 ## "Every deal, proven on-chain. Now on Stellar."
 
-> This is the Stellar/Soroban port of Pact Protocol.
-> All smart contracts are written in Rust for Soroban.
-> Read ALL spec files in `/specs/` before writing any code.
+> Stellar/Soroban port of Pact Protocol. Read ALL spec files in `/specs/` before writing code.
 
 ---
 
 ## WHAT WE ARE BUILDING
 
-A trustless creator–brand deal protocol where AI agents negotiate campaigns on-chain,
-stake capital on outcomes, and settle via oracle — with a prediction market (PactTrade)
-on top where anyone can trade campaign outcomes.
+Trustless creator–brand deals: AI agents negotiate on-chain campaigns, stake capital on outcomes, settle via oracle — with **PactMarket** prediction trading on top.
 
-**Network:** Stellar Testnet (via Soroban)
+**Network:** Stellar Testnet (Soroban)
 
 ---
 
-## DEPLOYED CONTRACT ADDRESSES (Stellar Testnet)
+## CONTRACT ADDRESSES
 
-| Contract | Address |
-|----------|---------|
-| AgentRegistry | `CBIORX6H6LNFVJZDDR5VRIK2SMS33F65NLAZXXUVIJCWDGQYFQBI3AMB` |
-| ValidationRegistry | `CCLSZGX22VETSIMFE27NXO4KOPLJOHRTRLGQTDJVBSX3IWRQCPIXSKWA` |
-| CampaignOracle | `CANGGB2JIORNUTNWWMWCORYKHMYBO64BEC464RLX2WIDFTD772PAUE2E` |
-| DealVault | `CBYJ4ZCAUBOKLLGYE4JLHBUOGCHLB4IA56G6JQH2DF5E5UCZWEULUIDZ` |
-| PactMarket | `CCTXVX6LYNHPL2XJHNOTXKJ33IOY7BYLPMN7SHMV6X2YW7LBPYNG2I4E` |
+Canonical testnet addresses: [ops/testnet/deployment-manifest.json](ops/testnet/deployment-manifest.json)
 
-Verify all on [Stellar Expert Testnet](https://stellar.expert/explorer/testnet)
+Copy `.env.example` → `.env` after deploy. Never commit `.env`.
+
+Verify on [Stellar Expert Testnet](https://stellar.expert/explorer/testnet).
 
 ---
 
@@ -35,21 +27,16 @@ Verify all on [Stellar Expert Testnet](https://stellar.expert/explorer/testnet)
 
 ```
 pact-protocol-stellar/
-├── CLAUDE.md                        ← This file
-├── .env                             ← Live contract addresses (DO NOT COMMIT)
-├── .env.example                     ← Template (safe to commit)
-├── contracts/                       ← Soroban Rust workspace
-│   ├── Cargo.toml                   ← Workspace config, soroban-sdk = "21.7.6"
-│   ├── agent_registry/              ← Agent identity + reputation (combined)
-│   ├── validation_registry/         ← On-chain artifact logging (ERC-8004 equivalent)
-│   ├── deal_vault/                  ← Deal escrow + risk routing + settlement
-│   ├── campaign_oracle/             ← Social data oracle & settlement signer
-│   └── pact_market/                 ← Binary prediction AMM (YES/NO tokens)
-├── agents/                          ← Python AI agent runtime
-│   ├── pyproject.toml
-│   └── main.py                      ← FastAPI entry point
-└── frontend/                        ← Next.js 14 app
-    └── package.json
+├── CLAUDE.md
+├── .env.example
+├── contracts/          # Soroban Rust workspace (soroban-sdk 21.7.6)
+├── agents/
+│   ├── pact/           # FastAPI package (api/, services/, db/, integrations/)
+│   └── pro/            # Pro tier extensions (PACT_EDITION=pro)
+├── frontend/           # Next.js 14
+├── packages/           # config manifest loader, shared types
+├── specs/              # Source of truth
+└── docs/               # Architecture, guides, API
 ```
 
 ---
@@ -57,53 +44,32 @@ pact-protocol-stellar/
 ## BUILD & TEST
 
 ```bash
-# Build for Soroban (CORRECT target — do NOT use wasm32-unknown-unknown)
-cd contracts
-stellar contract build
+make install && make test
 
-# Run all 21 tests
-cargo test
-
-# Test individual package
-cargo test --package agent_registry
+# Or individually:
+cd contracts && stellar contract build && cargo test
+cd agents && pytest tests/
+cd frontend && npm run build
 ```
 
 ---
 
 ## DEPLOY TO TESTNET
 
-```bash
-cd contracts
-
-# Deploy (replace with your WASM path)
-stellar contract deploy \
-  --wasm target/wasm32v1-none/release/agent_registry.wasm \
-  --source deployer \
-  --network testnet
-
-# Initialize contracts (see .env for addresses)
-stellar contract invoke \
-  --id $AGENT_REGISTRY_CONTRACT_ID \
-  --source deployer \
-  --network testnet \
-  -- initialize \
-  --oracle $ORACLE_ADDRESS
-```
+See [docs/operations/testnet-runbook.md](docs/operations/testnet-runbook.md) and `scripts/testnet/deploy_all.sh`.
 
 ---
 
 ## CRITICAL RULES
 
-- **Always build with `stellar contract build`** — NOT `cargo build --target wasm32-unknown-unknown`.
-  The stellar CLI uses `wasm32v1-none` which is the Soroban-compatible subset.
-- **Every state change touching capital MUST go through DealVault.** Never touch USDC directly.
-- **Oracle-only writes** for reputation and settlement — never self-reported.
-- **Both parties must sign** `create_deal` — creator.require_auth() AND brand.require_auth().
-- **soroban-sdk version MUST stay at `21.7.6`** in workspace — do not bump without testing.
+- Build with `stellar contract build` — NOT `wasm32-unknown-unknown`.
+- Every capital state change goes through **DealVault**.
+- Oracle-only writes for reputation and settlement.
+- Both parties must sign `create_deal`.
+- Keep `soroban-sdk = "21.7.6"` unless tested and approved.
 
 ---
 
-## WALLETS (testnet only)
+## WALLETS
 
-- **Deployer:** `GCX2N44HF7YH3JA5DLX3FJKNR4O3PNOTVWBT3TZ276RWJDVRAPKROUC2` (stellar key: `deployer`)
-- **Oracle Signer:** `GBGCHRT4SXPKYNTJHM65UNOVB7SNWRXKHZPTK4VOCCELGP5YV6YEYE56` (stellar key: `bootcamp_admin`)
+Configure deployer and oracle addresses in `.env` only. Do not store secret keys in this file.

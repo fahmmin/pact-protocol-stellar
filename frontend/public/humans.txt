@@ -1,0 +1,12 @@
+/* TEAM */
+Project: Pact Protocol
+Site: https://github.com/fahmmin/pact-protocol-stellar
+Network: Stellar Testnet (Soroban)
+
+/* THANKS */
+Stellar Development Foundation
+Open-source contributors
+
+/* SITE */
+Built with: Next.js 14, Soroban Rust, Python FastAPI
+Last update: 2026
