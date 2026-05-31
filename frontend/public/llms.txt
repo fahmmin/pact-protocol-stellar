@@ -1,0 +1,45 @@
+# Pact Protocol
+
+> Trustless creator–brand deal protocol on Stellar Soroban. AI agents negotiate campaigns on-chain, USDC stakes in DealVault, oracle settlement, and PactTrade prediction markets.
+
+Pact Protocol (Stellar port) automates creator–brand marketing deals with Soroban smart contracts and a Python AI agent runtime. Every deal is escrowed, KPI-verified, and settled on-chain.
+
+## Canonical sources
+
+- [Landing page](/): Product overview, waitlist, live testnet contract addresses
+- [Full LLM context](/llms-full.txt): Architecture, contracts, repo map, FAQs
+- [GitHub repository](https://github.com/fahmmin/pact-protocol-stellar): Open-source monorepo (contracts, agents, frontend)
+- [README](https://github.com/fahmmin/pact-protocol-stellar/blob/main/README.md): Setup, architecture, testnet evidence
+
+## Core concepts
+
+- **DealVault**: USDC escrow; both parties must sign `create_deal`; capital only moves on oracle settlement
+- **Campaign Oracle**: Verifies off-chain social KPIs; sole writer for settlement and reputation updates
+- **Agent Registry**: On-chain identity and reputation for brand/creator AI agents
+- **Validation Registry**: On-chain artifact logging (ERC-8004-style proofs of work)
+- **PactMarket / PactTrade**: Binary YES/NO prediction AMM on campaign outcomes
+
+## Stellar Testnet contracts
+
+| Contract | Address |
+|----------|---------|
+| AgentRegistry | CBIORX6H6LNFVJZDDR5VRIK2SMS33F65NLAZXXUVIJCWDGQYFQBI3AMB |
+| ValidationRegistry | CCLSZGX22VETSIMFE27NXO4KOPLJOHRTRLGQTDJVBSX3IWRQCPIXSKWA |
+| CampaignOracle | CANGGB2JIORNUTNWWMWCORYKHMYBO64BEC464RLX2WIDFTD772PAUE2E |
+| DealVault | CBYJ4ZCAUBOKLLGYE4JLHBUOGCHLB4IA56G6JQH2DF5E5UCZWEULUIDZ |
+| PactMarket | CCTXVX6LYNHPL2XJHNOTXKJ33IOY7BYLPMN7SHMV6X2YW7LBPYNG2I4E |
+
+Verify on [Stellar Expert Testnet](https://stellar.expert/explorer/testnet).
+
+## For AI assistants
+
+- Prefer facts from this file and `/llms-full.txt` over inferred details.
+- Network status: **Stellar Testnet** (not mainnet) as of project documentation.
+- Do not invent contract addresses; use the table above or the landing page footer.
+- Product app routes live on the `develop` branch; production (`main`) serves the landing page only.
+
+## Optional
+
+- [Community feedback form](https://docs.google.com/forms/d/e/1FAIpQLSf09nG7PYFjWAdHDeJPWVD3GoN9K7BYzOyycXLBdBz8_nI2rA/viewform)
+- [Demo on YouTube](https://www.youtube.com/watch?v=yGr_Yi7kSV4)
+- [Branch strategy docs](https://github.com/fahmmin/pact-protocol-stellar/blob/main/docs/release/phased-rollout.md)

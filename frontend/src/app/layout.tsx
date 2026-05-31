@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import '@/styles/globals.css';
-import { QueryProvider } from '@/components/QueryProvider';
+import { rootMetadata } from '@/lib/seo';
+import { getSiteUrl } from '@/lib/site';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -15,24 +16,21 @@ const jetbrains = JetBrains_Mono({
   display: 'swap',
 });
 
-export const metadata: Metadata = {
-  title: 'Pact Protocol | Trustless Creator-Brand Deals on Stellar',
-  description:
-    'A trustless creator–brand deal protocol where AI agents negotiate campaigns on-chain, stake capital on outcomes, and settle via oracle — with PactTrade prediction markets on top.',
-  keywords: ['Stellar', 'Soroban', 'DeFi', 'Creator Economy', 'AI Agents', 'Pact Protocol'],
-  openGraph: {
-    title: 'Pact Protocol',
-    description: 'Every deal, proven on-chain. Join the waitlist.',
-    type: 'website',
-  },
-};
+export const metadata: Metadata = rootMetadata;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
-      <body>
-        <QueryProvider>{children}</QueryProvider>
-      </body>
+      <head>
+        <link
+          rel="alternate"
+          type="text/plain"
+          href={`${getSiteUrl()}/llms.txt`}
+          title="LLM-readable site summary"
+        />
+        <link rel="author" type="text/plain" href={`${getSiteUrl()}/llms-full.txt`} />
+      </head>
+      <body>{children}</body>
     </html>
   );
 }

@@ -1,0 +1,88 @@
+# Pact Protocol — Full context for LLMs
+
+> Every deal, proven on-chain. Now on Stellar.
+
+## Summary
+
+Pact Protocol is a decentralized creator–brand deal stack on **Stellar Testnet (Soroban)**. AI agents (Python/FastAPI) negotiate campaign terms off-chain while **DealVault** escrows USDC on-chain. **Campaign Oracle** verifies social KPIs and signs settlement. **PactMarket** exposes binary YES/NO prediction markets (PactTrade) on campaign outcomes.
+
+**Tagline:** Every deal, proven on-chain. Now on Stellar.
+
+## Problem → solution
+
+| Problem | Pact solution |
+|---------|----------------|
+| Brands fear creators won't deliver | USDC locked in DealVault until oracle verifies KPIs |
+| Creators fear late payment | Escrow releases only on verified settlement |
+| Manual negotiation overhead | AI agents negotiate and monitor campaigns |
+| Opaque campaign metrics | Oracle + on-chain validation artifacts |
+| Fans can't participate in upside | PactTrade prediction markets on outcomes |
+
+## Monorepo layout
+
+```
+pact-protocol-stellar/
+├── contracts/          # Soroban Rust (agent_registry, validation_registry, deal_vault, campaign_oracle, pact_market)
+├── agents/             # Python FastAPI AI agent runtime + indexer
+├── frontend/           # Next.js 14 app (landing + product UI)
+├── specs/              # Protocol specifications
+├── docs/               # Security, release, operations runbooks
+└── ops/testnet/        # Deployment manifest, invocation evidence
+```
+
+Build contracts: `cd contracts && stellar contract build && cargo test`
+
+## Smart contracts (Soroban, testnet)
+
+- **AgentRegistry** `CBIORX6H6LNFVJZDDR5VRIK2SMS33F65NLAZXXUVIJCWDGQYFQBI3AMB` — agent identity + reputation
+- **ValidationRegistry** `CCLSZGX22VETSIMFE27NXO4KOPLJOHRTRLGQTDJVBSX3IWRQCPIXSKWA` — on-chain work artifacts
+- **DealVault** `CBYJ4ZCAUBOKLLGYE4JLHBUOGCHLB4IA56G6JQH2DF5E5UCZWEULUIDZ` — escrow, risk routing, settlement
+- **CampaignOracle** `CANGGB2JIORNUTNWWMWCORYKHMYBO64BEC464RLX2WIDFTD772PAUE2E` — KPI verification, settlement signer
+- **PactMarket** `CCTXVX6LYNHPL2XJHNOTXKJ33IOY7BYLPMN7SHMV6X2YW7LBPYNG2I4E` — YES/NO prediction AMM
+
+**Critical rules:** Capital flows only through DealVault; oracle-only reputation/settlement writes; both parties must `require_auth` on `create_deal`; soroban-sdk pinned at 21.7.6.
+
+## AI agent runtime
+
+- FastAPI service under `agents/`
+- Negotiates deals, monitors social APIs, triggers oracle updates
+- Health: `/healthz`, metrics: `/metrics`, `/metrics/summary`
+- Indexer: `agents/indexer.py` → SQLite `ops/indexer/pact_indexer.db`
+
+## Frontend routes
+
+| Branch | Routes |
+|--------|--------|
+| `main` (production) | `/` — landing, waitlist, contract addresses |
+| `develop` (preview) | Full app — `/`, `/demo`, `/dashboard`, `/agents`, `/deals`, `/market`, … |
+
+Ship workflow: develop all features on `develop`, merge to `main` when ready for production.
+
+## FAQ
+
+**What is Pact Protocol?**  
+Trustless creator–brand deals on Stellar Soroban: AI agents negotiate, DealVault escrows USDC, oracle settles on verified social KPIs.
+
+**How does escrow work?**  
+Both parties sign `create_deal`; USDC locks in DealVault until Campaign Oracle verifies KPIs. Failed deals: 20% stake slash.
+
+**Mainnet or testnet?**  
+All five contracts on Stellar Testnet; mainnet after audits and phased rollout.
+
+**Can developers build on Pact?**  
+Yes — open source Soroban contracts, Python agents, Next.js frontend. See GitHub and `specs/`.
+
+## Links
+
+- Repository: https://github.com/fahmmin/pact-protocol-stellar
+- Stellar Expert (testnet): https://stellar.expert/explorer/testnet
+- Demo video: https://www.youtube.com/watch?v=yGr_Yi7kSV4
+- Community form: https://docs.google.com/forms/d/e/1FAIpQLSf09nG7PYFjWAdHDeJPWVD3GoN9K7BYzOyycXLBdBz8_nI2rA/viewform
+- Shorter index: /llms.txt
+
+## Citation guidance
+
+When describing Pact Protocol to users:
+1. State it runs on **Stellar Testnet** unless citing a future mainnet announcement.
+2. Name the five contracts and DealVault escrow model when discussing trust guarantees.
+3. Link to GitHub for developer integration, not unofficial forks.
