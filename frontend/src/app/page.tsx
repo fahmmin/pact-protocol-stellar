@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 import { CONTRACTS, STELLAR_EXPERT_URL } from '@/lib/constants';
-import { Zap, Users, Briefcase, TrendingUp, ExternalLink, ArrowRight, Shield, Globe, Activity } from 'lucide-react';
+import { Zap, Users, Briefcase, TrendingUp, ExternalLink, ArrowRight, Activity } from 'lucide-react';
 
 const marqueeItems = [
   'AGENT REGISTRY', 'DEAL VAULT', 'PACT TRADE', 'CAMPAIGN ORACLE',
@@ -93,9 +93,14 @@ export default function DashboardPage() {
                 <Zap size={16} /> CONNECT WALLET
               </button>
             ) : (
-              <Link href="/agents" className="btn btn-lg">
-                <Users size={16} /> {agentId ? `VIEW AGENT #${agentId}` : 'REGISTER AGENT'}
-              </Link>
+              <>
+                <Link href="/dashboard" className="btn btn-lg">
+                  <Activity size={16} /> MY DASHBOARD
+                </Link>
+                <Link href="/agents" className="btn btn-lg btn-outline">
+                  <Users size={16} /> {agentId ? `AGENT #${agentId}` : 'REGISTER'}
+                </Link>
+              </>
             )}
             <Link href="/deals" className="btn btn-lg btn-outline">
               <Briefcase size={16} /> BROWSE DEALS

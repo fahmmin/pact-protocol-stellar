@@ -13,9 +13,14 @@ import { ExternalLink, Clock, DollarSign, Shield } from 'lucide-react';
 interface Props {
   deal: Deal;
   highlight?: boolean;
+  highlightWallet?: string;
 }
 
-export default function DealCard({ deal, highlight }: Props) {
+export default function DealCard({ deal, highlight, highlightWallet }: Props) {
+  const isParty =
+    highlight ||
+    (highlightWallet &&
+      (deal.creator_wallet === highlightWallet || deal.brand_wallet === highlightWallet));
   const statusLabel = DEAL_STATUS_LABELS[deal.status] ?? 'Unknown';
   const statusClass = DEAL_STATUS_COLORS[deal.status] ?? 'badge-gray';
 
@@ -24,7 +29,7 @@ export default function DealCard({ deal, highlight }: Props) {
   const deadlineStr = deadline.toLocaleDateString();
 
   return (
-    <div className={`card ${highlight ? '' : 'card-dim'}`}>
+    <div className={`card ${isParty ? '' : 'card-dim'}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
         <span

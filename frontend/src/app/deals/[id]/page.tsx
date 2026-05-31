@@ -5,14 +5,19 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAppStore } from '@/store/useAppStore';
 import TxStatus from '@/components/TxStatus';
+import DealGuidelines from '@/components/DealGuidelines';
+import KpiPanel from '@/components/KpiPanel';
 import {
   getDeal,
   getAgentProfile,
   buildDepositStakes,
   buildSubmitDelivery,
+  hasOracleResult,
+  getOracleResult,
   Deal,
   AgentProfile,
 } from '@/lib/contracts';
+import { getDealMetrics } from '@/lib/agentApi';
 import {
   DEAL_STATUS_LABELS,
   DEAL_STATUS_COLORS,
@@ -32,6 +37,11 @@ export default function DealDetailPage() {
   const [brandProfile, setBrandProfile] = useState<AgentProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [oracleEngagement, setOracleEngagement] = useState<number | null>(null);
+  const [dealMetrics, setDealMetrics] = useState<{
+    daily_checks: import('@/lib/agentApi').DailyMetricCheck[];
+    compliance_actions: import('@/lib/agentApi').ComplianceAction[];
+  } | null>(null);
 
   async function loadDeal() {
     setLoading(true);
@@ -39,10 +49,16 @@ export default function DealDetailPage() {
     try {
       const d = await getDeal(dealId);
       setDeal(d);
-      // Load agent profiles
       await Promise.allSettled([
         getAgentProfile(d.creator_agent_id).then(setCreatorProfile).catch(() => {}),
         getAgentProfile(d.brand_agent_id).then(setBrandProfile).catch(() => {}),
+        hasOracleResult(dealId).then(async (has) => {
+          if (has) {
+            const r = await getOracleResult(dealId);
+            setOracleEngagement(r.engagement_bps);
+          }
+        }),
+        getDealMetrics(dealId).then(setDealMetrics).catch(() => setDealMetrics(null)),
       ]);
     } catch (err: any) {
       setError(`Deal #${dealId} not found on-chain.`);
@@ -221,6 +237,19 @@ export default function DealDetailPage() {
 
             {/* Right: Timeline + Actions */}
             <div>
+              <KpiPanel
+                dealId={deal.deal_id}
+                deadline={deadline}
+                dealStatus={deal.status}
+                dailyChecks={dealMetrics?.daily_checks ?? []}
+                oracleEngagementBps={oracleEngagement}
+              />
+
+              <DealGuidelines
+                dealStatus={deal.status}
+                complianceActions={dealMetrics?.compliance_actions ?? []}
+              />
+
               {/* Timeline */}
               <div className="card" style={{ marginBottom: '1.5rem' }}>
                 <h4 style={{ marginBottom: '1.25rem' }}>DEAL LIFECYCLE</h4>

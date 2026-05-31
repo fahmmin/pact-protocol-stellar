@@ -49,11 +49,15 @@ export default function NavBar() {
   }
 
   const navLinks = [
-    { href: '/', label: 'Dashboard', icon: Zap },
+    { href: '/', label: 'Home', icon: Zap },
+    { href: '/dashboard', label: 'Dashboard', icon: Activity },
     { href: '/agents', label: 'Agents', icon: Users },
+    { href: '/matches', label: 'Matches', icon: Users },
     { href: '/deals', label: 'Deals', icon: Briefcase },
     { href: '/market', label: 'PactTrade', icon: TrendingUp },
     { href: '/metrics', label: 'Metrics', icon: Activity },
+    { href: '/admin/review', label: 'Review', icon: ExternalLink },
+    { href: '/admin/settlement', label: 'Settle', icon: ExternalLink },
   ];
 
   return (

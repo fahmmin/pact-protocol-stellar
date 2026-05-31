@@ -39,11 +39,31 @@ const initialTx: TxState = {
   message: null,
 };
 
+function loadPersistedWallet(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    return localStorage.getItem('pact_wallet') || null;
+  } catch {
+    return null;
+  }
+}
+
+const persistedWallet = loadPersistedWallet();
+
 export const useAppStore = create<AppStore>((set, get) => ({
-  walletAddress: null,
-  isWalletConnected: false,
-  setWallet: (address) =>
-    set({ walletAddress: address, isWalletConnected: !!address }),
+  walletAddress: persistedWallet,
+  isWalletConnected: !!persistedWallet,
+  setWallet: (address) => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (address) localStorage.setItem('pact_wallet', address);
+        else localStorage.removeItem('pact_wallet');
+      } catch {
+        /* ignore */
+      }
+    }
+    set({ walletAddress: address, isWalletConnected: !!address });
+  },
 
   agentId: null,
   agentType: null,

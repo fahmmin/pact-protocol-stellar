@@ -8,7 +8,8 @@ import {
   USDC_DECIMALS,
 } from '@/lib/constants';
 import { shortAddr, formatUsdc } from '@/lib/stellar';
-import { ExternalLink, Star, TrendingUp } from 'lucide-react';
+import { ExternalLink, Star } from 'lucide-react';
+import VerificationBadge from '@/components/VerificationBadge';
 
 interface Props {
   id: number;
@@ -58,7 +59,10 @@ export default function AgentCard({ id, profile, score, isCurrentUser }: Props) 
             {profile.agent_type}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1" style={{ flexWrap: 'wrap' }}>
+          {profile.agent_type === 'Creator' && (
+            <VerificationBadge verified={profile.verified} size="sm" />
+          )}
           <span className={`badge ${tierClass}`}>
             <Star size={9} />
             {tierLabel}

@@ -168,8 +168,8 @@ INVOCATIONS = [
         "settle",
         "bootcamp_admin",
         "yes",
-        ["--deal_id", "1", "--success", "true", "--_eng_score", "700"],
-        "Settle funds from oracle",
+        ["--deal_id", "1"],
+        "Settle funds using CampaignOracle result (post_result first)",
     ),
     Invocation(
         "pact_market",

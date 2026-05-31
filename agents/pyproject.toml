@@ -9,4 +9,6 @@ dependencies = [
     "stellar-sdk",
     "pydantic",
     "anthropic",
+    "google-genai",
+    "python-dotenv",
 ]

@@ -1,0 +1,15 @@
+[package]
+name = "deal_vault"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+soroban-sdk = { workspace = true }
+campaign_oracle = { path = "../campaign_oracle" }
+
+[dev-dependencies]
+soroban-sdk = { version = "21.7.6", features = ["testutils"] }
+campaign_oracle = { path = "../campaign_oracle" }
+
+[lib]
+crate-type = ["cdylib", "rlib"]

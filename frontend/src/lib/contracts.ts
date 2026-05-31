@@ -9,9 +9,18 @@ import {
   i128Val,
   u64Val,
   boolVal,
+  symbolVal,
 } from './stellar';
 import { CONTRACTS } from './constants';
 import { nativeToScVal, xdr } from '@stellar/stellar-sdk';
+import {
+  decodeAgentProfile,
+  decodeBool,
+  decodeOracleResult,
+  decodeReputationScore,
+  decodeU32,
+  type OracleResult,
+} from './sorobanDecode';
 
 // ────────────────────────────────────────────────────────────
 // Types matching Soroban contract structs
@@ -67,26 +76,38 @@ export interface Market {
 // ────────────────────────────────────────────────────────────
 
 export async function getAgentProfile(id: number): Promise<AgentProfile> {
-  return readContract<AgentProfile>(
+  return readContract(
     CONTRACTS.AGENT_REGISTRY,
     'get_profile',
-    [u32Val(id)]
+    [u32Val(id)],
+    decodeAgentProfile
   );
 }
 
 export async function getReputationScore(id: number): Promise<ReputationScore> {
-  return readContract<ReputationScore>(
+  return readContract(
     CONTRACTS.AGENT_REGISTRY,
     'get_score',
-    [u32Val(id)]
+    [u32Val(id)],
+    decodeReputationScore
   );
 }
 
 export async function getAgentId(wallet: string): Promise<number> {
-  return readContract<number>(
+  return readContract(
     CONTRACTS.AGENT_REGISTRY,
     'get_agent_id',
-    [addressVal(wallet)]
+    [addressVal(wallet)],
+    decodeU32
+  );
+}
+
+export async function getAgentCount(): Promise<number> {
+  return readContract(
+    CONTRACTS.AGENT_REGISTRY,
+    'agent_count',
+    [],
+    decodeU32
   );
 }
 
@@ -118,6 +139,38 @@ export async function buildMintBrand(
   ]);
 }
 
+export async function buildUpdateCreator(
+  publicKey: string,
+  agentId: number,
+  handle: string,
+  platform: string,
+  metadataUri: string,
+  followerCount: number
+): Promise<string> {
+  return buildTx(publicKey, CONTRACTS.AGENT_REGISTRY, 'update_creator_profile', [
+    u32Val(agentId),
+    addressVal(publicKey),
+    nativeToScVal(handle, { type: 'string' }),
+    nativeToScVal(platform, { type: 'string' }),
+    nativeToScVal(metadataUri, { type: 'string' }),
+    nativeToScVal(followerCount, { type: 'u64' }),
+  ]);
+}
+
+export async function buildUpdateBrand(
+  publicKey: string,
+  agentId: number,
+  brandName: string,
+  metadataUri: string
+): Promise<string> {
+  return buildTx(publicKey, CONTRACTS.AGENT_REGISTRY, 'update_brand_profile', [
+    u32Val(agentId),
+    addressVal(publicKey),
+    nativeToScVal(brandName, { type: 'string' }),
+    nativeToScVal(metadataUri, { type: 'string' }),
+  ]);
+}
+
 // ────────────────────────────────────────────────────────────
 // Deal Vault
 // ────────────────────────────────────────────────────────────
@@ -139,10 +192,23 @@ export async function buildCreateDeal(
   brandStake: bigint,
   deadline: bigint,
   creatorWallet: string,
-  brandWallet: string
+  brandWallet: string,
+  dealIntentHashHex?: string
 ): Promise<string> {
-  // Simple intent hash: keccak-like from deal params using timestamp
-  const intentHash = new Uint8Array(32).fill(1);
+  let intentHash: Uint8Array;
+  if (dealIntentHashHex) {
+    const hex = dealIntentHashHex.replace(/^0x/, '');
+    intentHash = new Uint8Array(
+      hex.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) ?? []
+    );
+    if (intentHash.length !== 32) {
+      const padded = new Uint8Array(32);
+      padded.set(intentHash.slice(0, 32));
+      intentHash = padded;
+    }
+  } else {
+    intentHash = new Uint8Array(32).fill(1);
+  }
 
   return buildTx(publicKey, CONTRACTS.DEAL_VAULT, 'create_deal', [
     u32Val(creatorId),
@@ -172,6 +238,93 @@ export async function buildSubmitDelivery(
 ): Promise<string> {
   return buildTx(publicKey, CONTRACTS.DEAL_VAULT, 'submit_delivery', [
     u32Val(dealId),
+  ]);
+}
+
+export async function buildSettleDeal(
+  publicKey: string,
+  dealId: number
+): Promise<string> {
+  return buildTx(publicKey, CONTRACTS.DEAL_VAULT, 'settle', [u32Val(dealId)]);
+}
+
+// ────────────────────────────────────────────────────────────
+// Agent Registry (oracle)
+// ────────────────────────────────────────────────────────────
+
+export async function buildSetCreatorVerified(
+  publicKey: string,
+  agentId: number,
+  verified: boolean
+): Promise<string> {
+  return buildTx(publicKey, CONTRACTS.AGENT_REGISTRY, 'set_creator_verified', [
+    u32Val(agentId),
+    boolVal(verified),
+  ]);
+}
+
+// ────────────────────────────────────────────────────────────
+// Validation Registry
+// ────────────────────────────────────────────────────────────
+
+export async function buildPostDealIntent(
+  publicKey: string,
+  dealId: number,
+  dataHashHex: string
+): Promise<string> {
+  const hex = dataHashHex.replace(/^0x/, '');
+  const dataHash = new Uint8Array(
+    hex.match(/.{1,2}/g)?.map((b) => parseInt(b, 16)) ?? new Array(32).fill(0)
+  );
+  const padded = new Uint8Array(32);
+  padded.set(dataHash.slice(0, 32));
+  const signature = new Uint8Array(64).fill(0);
+
+  return buildTx(publicKey, CONTRACTS.VALIDATION_REGISTRY, 'post_artifact', [
+    u32Val(dealId),
+    symbolVal('DealIntent'),
+    xdr.ScVal.scvBytes(Buffer.from(padded)),
+    addressVal(publicKey),
+    xdr.ScVal.scvBytes(Buffer.from(signature)),
+  ]);
+}
+
+// ────────────────────────────────────────────────────────────
+// Campaign Oracle
+// ────────────────────────────────────────────────────────────
+
+export type { OracleResult };
+
+export async function getOracleResult(dealId: number): Promise<OracleResult> {
+  return readContract(
+    CONTRACTS.CAMPAIGN_ORACLE,
+    'get_result',
+    [u32Val(dealId)],
+    decodeOracleResult
+  );
+}
+
+export async function hasOracleResult(dealId: number): Promise<boolean> {
+  return readContract(
+    CONTRACTS.CAMPAIGN_ORACLE,
+    'has_result',
+    [u32Val(dealId)],
+    decodeBool
+  );
+}
+
+export async function buildPostOracleResult(
+  publicKey: string,
+  dealId: number,
+  engagementBps: number,
+  postTimestamp: bigint,
+  success: boolean
+): Promise<string> {
+  return buildTx(publicKey, CONTRACTS.CAMPAIGN_ORACLE, 'post_result', [
+    u32Val(dealId),
+    u32Val(engagementBps),
+    u64Val(postTimestamp),
+    boolVal(success),
   ]);
 }
 

@@ -1,5 +1,5 @@
 import {
-  SorobanRpc,
+  rpc as SorobanRpc,
   TransactionBuilder,
   Networks,
   BASE_FEE,
@@ -51,9 +51,16 @@ export async function buildTx(
   args: xdr.ScVal[] = []
 ): Promise<string> {
   const rpc = getRpc();
-  const account = await rpc.getAccount(publicKey);
-  const contract = new Contract(contractId);
+  let account;
+  try {
+    account = await rpc.getAccount(publicKey);
+  } catch {
+    throw new Error(
+      'Account not found on testnet. Fund your wallet with Friendbot before submitting transactions.'
+    );
+  }
 
+  const contract = new Contract(contractId);
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
     networkPassphrase: NETWORK.PASSPHRASE,
@@ -62,13 +69,41 @@ export async function buildTx(
     .setTimeout(30)
     .build();
 
-  const simResult = await rpc.simulateTransaction(tx);
+  const simResult = await withTimeout(
+    rpc.simulateTransaction(tx),
+    30000,
+    `Simulation timed out while building ${method}.`
+  );
   if (SorobanRpc.Api.isSimulationError(simResult)) {
-    throw new Error(`Simulation failed: ${simResult.error}`);
+    const events =
+      'events' in simResult && Array.isArray(simResult.events)
+        ? simResult.events
+            .map((e) => ('message' in e && typeof e.message === 'string' ? e.message : ''))
+            .filter(Boolean)
+            .join('; ')
+        : '';
+    throw new Error(
+      `Simulation failed: ${simResult.error ?? 'unknown'}${events ? ` (${events})` : ''}`
+    );
   }
 
   const preparedTx = SorobanRpc.assembleTransaction(tx, simResult).build();
   return preparedTx.toXDR();
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise
+      .then((value) => {
+        clearTimeout(timer);
+        resolve(value);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
 }
 
 // Submit a signed XDR transaction and poll for result
@@ -103,10 +138,10 @@ export async function submitAndWait(signedXdr: string): Promise<string> {
 export async function readContract<T>(
   contractId: string,
   method: string,
-  args: xdr.ScVal[] = []
+  args: xdr.ScVal[] = [],
+  decode?: (val: xdr.ScVal) => T
 ): Promise<T> {
   const rpc = getRpc();
-  // Use a dummy keypair for read-only calls
   const dummyKeypair = Keypair.random();
   const dummyAccount = {
     accountId: () => dummyKeypair.publicKey(),
@@ -129,7 +164,11 @@ export async function readContract<T>(
   }
   if (!sim.result) throw new Error('No result from simulation');
 
-  return scValToNative(sim.result.retval) as T;
+  const retval = sim.result.retval;
+  if (decode) {
+    return decode(retval);
+  }
+  return scValToNative(retval) as T;
 }
 
 // Helper: convert u32 to ScVal

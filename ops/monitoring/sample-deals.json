@@ -1,0 +1,9 @@
+[
+  {
+    "deal_id": 1,
+    "engagement_bps": 620,
+    "likes": 1200,
+    "views": 45000,
+    "kpi_threshold_bps": 500
+  }
+]

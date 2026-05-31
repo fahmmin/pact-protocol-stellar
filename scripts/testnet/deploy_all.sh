@@ -5,6 +5,8 @@ set -euo pipefail
 # Requires configured `deployer` and `bootcamp_admin` identities in Stellar CLI.
 
 NETWORK="testnet"
+RPC_URL="https://soroban-testnet.stellar.org"
+NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 USDC="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
 ORACLE="$(stellar keys address bootcamp_admin)"
 TREASURY="$(stellar keys address deployer)"
@@ -20,7 +22,7 @@ deploy_contract() {
   local name="$1"
   local wasm="$2"
   local deployed
-  deployed="$(stellar contract deploy --network "$NETWORK" --source deployer --wasm "$wasm")"
+  deployed="$(stellar contract deploy --network "$NETWORK" --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --source deployer --wasm "$wasm")"
   echo "$name=$deployed"
 }
 
@@ -32,10 +34,10 @@ DEAL_VAULT_ID="$(deploy_contract "deal_vault" "target/wasm32v1-none/release/deal
 PACT_MARKET_ID="$(deploy_contract "pact_market" "target/wasm32v1-none/release/pact_market.wasm" | cut -d= -f2)"
 
 echo "Initializing contracts..."
-stellar contract invoke --network "$NETWORK" --source deployer --id "$AGENT_REGISTRY_ID" -- initialize --oracle "$ORACLE"
-stellar contract invoke --network "$NETWORK" --source deployer --id "$CAMPAIGN_ORACLE_ID" -- initialize --signer "$ORACLE"
-stellar contract invoke --network "$NETWORK" --source deployer --id "$DEAL_VAULT_ID" -- initialize --usdc "$USDC" --oracle "$ORACLE" --treasury "$TREASURY"
-stellar contract invoke --network "$NETWORK" --source deployer --id "$PACT_MARKET_ID" -- initialize --usdc "$USDC" --oracle "$ORACLE"
+stellar contract invoke --network "$NETWORK" --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --source deployer --id "$AGENT_REGISTRY_ID" -- initialize --oracle "$ORACLE"
+stellar contract invoke --network "$NETWORK" --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --source deployer --id "$CAMPAIGN_ORACLE_ID" -- initialize --signer "$ORACLE"
+stellar contract invoke --network "$NETWORK" --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --source deployer --id "$DEAL_VAULT_ID" -- initialize --usdc "$USDC" --oracle "$ORACLE" --treasury "$TREASURY" --campaign_oracle "$CAMPAIGN_ORACLE_ID"
+stellar contract invoke --network "$NETWORK" --rpc-url "$RPC_URL" --network-passphrase "$NETWORK_PASSPHRASE" --source deployer --id "$PACT_MARKET_ID" -- initialize --usdc "$USDC" --oracle "$ORACLE"
 
 echo "Deployment summary:"
 echo "NEXT_PUBLIC_AGENT_REGISTRY=$AGENT_REGISTRY_ID"

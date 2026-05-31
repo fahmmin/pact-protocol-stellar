@@ -1,0 +1,26 @@
+[workspace]
+resolver = "2"
+members = [
+    "agent_registry",
+    "validation_registry",
+    "deal_vault",
+    "campaign_oracle",
+    "pact_market",
+]
+
+[workspace.dependencies]
+soroban-sdk = "21.7.6"
+
+[profile.release]
+opt-level = "z"
+overflow-checks = true
+debug = 0
+strip = "symbols"
+debug-assertions = false
+panic = "abort"
+codegen-units = 1
+lto = true
+
+[profile.release-with-logs]
+inherits = "release"
+debug-assertions = true

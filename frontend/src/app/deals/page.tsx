@@ -1,26 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import TxStatus from '@/components/TxStatus';
 import DealCard from '@/components/DealCard';
 import {
   getDeal,
   buildCreateDeal,
+  buildPostDealIntent,
+  getAgentProfile,
   Deal,
 } from '@/lib/contracts';
+import {
+  startNegotiationSession,
+  advanceNegotiationRound,
+  approveNegotiationTerms,
+  type NegotiationSession,
+} from '@/lib/agentApi';
 import { signWithFreighter } from '@/lib/freighter';
 import { parseUsdc } from '@/lib/stellar';
-import { Briefcase, Plus, RefreshCw, AlertCircle } from 'lucide-react';
+import { Briefcase, Plus, RefreshCw, AlertCircle, CheckCircle2 } from 'lucide-react';
 
-export default function DealsPage() {
-  const { isWalletConnected, walletAddress, agentId, tx, setTxStatus, submitTx } = useAppStore();
+function DealsPageContent() {
+  const searchParams = useSearchParams();
+  const { isWalletConnected, walletAddress, tx, setTxStatus, submitTx } = useAppStore();
 
   const [tab, setTab] = useState<'list' | 'create'>('list');
   const [deals, setDeals] = useState<Deal[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Create deal form
   const [creatorId, setCreatorId] = useState('');
   const [brandId, setBrandId] = useState('');
   const [payment, setPayment] = useState('');
@@ -29,8 +38,26 @@ export default function DealsPage() {
   const [creatorWallet, setCreatorWallet] = useState('');
   const [brandWallet, setBrandWallet] = useState('');
   const [daysFromNow, setDaysFromNow] = useState('30');
+  const [kpiThreshold, setKpiThreshold] = useState('500');
+  const [matchProposalId, setMatchProposalId] = useState<number | null>(null);
 
-  // Auto-fill wallet address
+  const [session, setSession] = useState<NegotiationSession | null>(null);
+  const [negotiating, setNegotiating] = useState(false);
+  const [termsApproved, setTermsApproved] = useState(false);
+  const [creatorApproved, setCreatorApproved] = useState(false);
+  const [brandApproved, setBrandApproved] = useState(false);
+  const [verificationWarning, setVerificationWarning] = useState<string | null>(null);
+
+  useEffect(() => {
+    const c = searchParams.get('creator');
+    const b = searchParams.get('brand');
+    const m = searchParams.get('match');
+    if (c) setCreatorId(c);
+    if (b) setBrandId(b);
+    if (m) setMatchProposalId(parseInt(m, 10));
+    if (c || b) setTab('create');
+  }, [searchParams]);
+
   useEffect(() => {
     if (walletAddress) setCreatorWallet(walletAddress);
   }, [walletAddress]);
@@ -55,10 +82,117 @@ export default function DealsPage() {
     setLoading(false);
   }
 
+  async function handleStartNegotiation() {
+    if (!creatorId || !brandId || !payment || !creatorStake || !brandStake) {
+      alert('Fill creator, brand, payment, and stakes first');
+      return;
+    }
+    setNegotiating(true);
+    setTermsApproved(false);
+    setCreatorApproved(false);
+    setBrandApproved(false);
+    try {
+      const deadlineSec = Math.floor(Date.now() / 1000) + parseInt(daysFromNow || '30') * 86400;
+      const result = await startNegotiationSession({
+        creator_id: creatorId,
+        brand_id: brandId,
+        payment_stroops: Number(parseUsdc(payment)),
+        creator_stake_stroops: Number(parseUsdc(creatorStake)),
+        brand_stake_stroops: Number(parseUsdc(brandStake)),
+        deadline_ts: deadlineSec,
+        kpi_threshold_bps: parseInt(kpiThreshold || '500', 10),
+        match_proposal_id: matchProposalId ?? undefined,
+      });
+      if (result.status === 'error') {
+        alert('Negotiation failed to start');
+        return;
+      }
+      setSession(result.session);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Negotiation failed');
+    } finally {
+      setNegotiating(false);
+    }
+  }
+
+  async function handleNextRound() {
+    if (!session) return;
+    setNegotiating(true);
+    try {
+      const result = await advanceNegotiationRound(session.id);
+      setSession(result.session);
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Round failed');
+    } finally {
+      setNegotiating(false);
+    }
+  }
+
+  async function handleApproveTerms(party: 'creator' | 'brand') {
+    if (!session || !walletAddress) return;
+    try {
+      const result = await approveNegotiationTerms(session.id, party, true);
+      setSession(result.session);
+      if (party === 'creator') setCreatorApproved(true);
+      if (party === 'brand') setBrandApproved(true);
+      if (result.session.status === 'approved') {
+        setTermsApproved(true);
+      }
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Approval failed');
+    }
+  }
+
+  async function handlePostDealIntent() {
+    if (!session || !walletAddress || !termsApproved) return;
+    setTxStatus('building');
+    try {
+      const xdr = await buildPostDealIntent(walletAddress, 0, session.deal_intent_hash);
+      setTxStatus('signing');
+      const signed = await signWithFreighter(xdr);
+      await submitTx(signed);
+    } catch (err: unknown) {
+      if (tx.status !== 'error') {
+        setTxStatus('error', { error: err instanceof Error ? err.message : 'Failed' });
+      }
+    }
+  }
+
+  useEffect(() => {
+    if (!creatorId) {
+      setVerificationWarning(null);
+      return;
+    }
+    getAgentProfile(parseInt(creatorId, 10))
+      .then((p) => {
+        if (p.agent_type === 'Creator' && !p.verified && payment) {
+          const amt = parseUsdc(payment);
+          if (amt > 5_000_000n) {
+            setVerificationWarning(
+              'Creator is unverified — max deal payment is $5 USDC until oracle verification.'
+            );
+          } else {
+            setVerificationWarning(null);
+          }
+        } else {
+          setVerificationWarning(null);
+        }
+      })
+      .catch(() => setVerificationWarning(null));
+  }, [creatorId, payment]);
+
   async function handleCreateDeal() {
     if (!isWalletConnected || !walletAddress) return;
+    if (!termsApproved || !session) {
+      alert('Complete AI negotiation and both-party term approval first');
+      return;
+    }
     if (!creatorId || !brandId || !payment || !creatorStake || !brandStake || !creatorWallet || !brandWallet) {
       alert('Please fill all required fields');
+      return;
+    }
+    if (verificationWarning) {
+      alert(verificationWarning);
       return;
     }
 
@@ -75,7 +209,8 @@ export default function DealsPage() {
         parseUsdc(brandStake),
         deadlineSec,
         creatorWallet,
-        brandWallet
+        brandWallet,
+        session.deal_intent_hash
       );
 
       setTxStatus('signing');
@@ -83,10 +218,14 @@ export default function DealsPage() {
       await submitTx(signedXdr);
       await loadDeals();
       setTab('list');
-    } catch (err: any) {
-      if (tx.status !== 'error') setTxStatus('error', { error: err.message });
+    } catch (err: unknown) {
+      if (tx.status !== 'error') {
+        setTxStatus('error', { error: err instanceof Error ? err.message : 'Failed' });
+      }
     }
   }
+
+  const canCreateDeal = termsApproved && session?.status === 'approved';
 
   return (
     <div className="container" style={{ padding: '3rem 1.5rem' }}>
@@ -96,18 +235,13 @@ export default function DealsPage() {
           ACTIVE<br />
           <span style={{ color: 'var(--accent-yellow)' }}>DEALS</span>
         </h1>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={loadDeals}
-          disabled={loading}
-        >
+        <button className="btn btn-ghost btn-sm" onClick={loadDeals} disabled={loading}>
           <RefreshCw size={13} /> Refresh
         </button>
       </div>
 
       <TxStatus />
 
-      {/* Tabs */}
       <div className="tabs">
         <button className={`tab ${tab === 'list' ? 'active' : ''}`} onClick={() => setTab('list')}>
           <Briefcase size={12} style={{ display: 'inline', marginRight: '4px' }} />
@@ -119,7 +253,6 @@ export default function DealsPage() {
         </button>
       </div>
 
-      {/* Deals List */}
       {tab === 'list' && (
         <div>
           {loading ? (
@@ -130,9 +263,6 @@ export default function DealsPage() {
             <div className="card card-dim" style={{ textAlign: 'center', padding: '3rem', borderStyle: 'dashed' }}>
               <Briefcase size={40} style={{ color: 'var(--text-muted)', margin: '0 auto 1rem' }} />
               <h3 style={{ marginBottom: '0.5rem' }}>No Deals Yet</h3>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                Be the first to create a deal on Pact Protocol.
-              </p>
               <button className="btn" onClick={() => setTab('create')}>
                 Create First Deal →
               </button>
@@ -140,18 +270,21 @@ export default function DealsPage() {
           ) : (
             <div className="grid-2">
               {deals.map((deal) => (
-                <DealCard key={deal.deal_id} deal={deal} highlight={
-                  deal.creator_wallet === walletAddress || deal.brand_wallet === walletAddress
-                } />
+                <DealCard
+                  key={deal.deal_id}
+                  deal={deal}
+                  highlight={
+                    deal.creator_wallet === walletAddress || deal.brand_wallet === walletAddress
+                  }
+                />
               ))}
             </div>
           )}
         </div>
       )}
 
-      {/* Create Deal Form */}
       {tab === 'create' && (
-        <div style={{ maxWidth: '600px' }}>
+        <div style={{ maxWidth: '640px' }}>
           {!isWalletConnected ? (
             <div className="card card-dim" style={{ textAlign: 'center', padding: '2rem', borderStyle: 'dashed' }}>
               <p style={{ color: 'var(--text-secondary)' }}>Connect your wallet to create a deal.</p>
@@ -161,156 +294,121 @@ export default function DealsPage() {
               <h3 style={{ marginBottom: '1.5rem' }}>CREATE DEAL</h3>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                {/* Agent IDs */}
                 <div className="grid-2" style={{ gap: '0.75rem' }}>
                   <div className="input-group">
                     <label>Creator Agent ID</label>
-                    <input
-                      className="input"
-                      placeholder="e.g. 1"
-                      type="number"
-                      min="1"
-                      value={creatorId}
-                      onChange={(e) => setCreatorId(e.target.value)}
-                    />
+                    <input className="input" type="number" min="1" value={creatorId} onChange={(e) => setCreatorId(e.target.value)} />
                   </div>
                   <div className="input-group">
                     <label>Brand Agent ID</label>
-                    <input
-                      className="input"
-                      placeholder="e.g. 2"
-                      type="number"
-                      min="1"
-                      value={brandId}
-                      onChange={(e) => setBrandId(e.target.value)}
-                    />
+                    <input className="input" type="number" min="1" value={brandId} onChange={(e) => setBrandId(e.target.value)} />
                   </div>
                 </div>
 
-                {/* Wallets */}
                 <div className="input-group">
-                  <label>Creator Wallet Address</label>
-                  <input
-                    className="input"
-                    placeholder="G..."
-                    value={creatorWallet}
-                    onChange={(e) => setCreatorWallet(e.target.value)}
-                  />
+                  <label>Creator Wallet</label>
+                  <input className="input" value={creatorWallet} onChange={(e) => setCreatorWallet(e.target.value)} />
                 </div>
                 <div className="input-group">
-                  <label>Brand Wallet Address</label>
-                  <input
-                    className="input"
-                    placeholder="G..."
-                    value={brandWallet}
-                    onChange={(e) => setBrandWallet(e.target.value)}
-                  />
+                  <label>Brand Wallet</label>
+                  <input className="input" value={brandWallet} onChange={(e) => setBrandWallet(e.target.value)} />
                 </div>
 
-                {/* Payment & Stakes */}
-                <div
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-dim)',
-                    padding: '1rem',
-                  }}
-                >
-                  <div
-                    style={{
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
-                      color: 'var(--text-secondary)',
-                      marginBottom: '0.75rem',
-                    }}
-                  >
-                    Financials (USDC)
+                <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-dim)', padding: '1rem' }}>
+                  <div className="input-group">
+                    <label>Payment (USDC)</label>
+                    <input className="input" type="number" step="0.01" value={payment} onChange={(e) => setPayment(e.target.value)} />
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="grid-2" style={{ gap: '0.75rem', marginTop: '0.75rem' }}>
                     <div className="input-group">
-                      <label>Payment (USDC to Creator on success)</label>
-                      <input
-                        className="input"
-                        placeholder="100.00"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={payment}
-                        onChange={(e) => setPayment(e.target.value)}
-                      />
+                      <label>Creator Stake</label>
+                      <input className="input" type="number" step="0.01" value={creatorStake} onChange={(e) => setCreatorStake(e.target.value)} />
                     </div>
-                    <div className="grid-2" style={{ gap: '0.75rem' }}>
-                      <div className="input-group">
-                        <label>Creator Stake (USDC)</label>
-                        <input
-                          className="input"
-                          placeholder="20.00"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={creatorStake}
-                          onChange={(e) => setCreatorStake(e.target.value)}
-                        />
-                      </div>
-                      <div className="input-group">
-                        <label>Brand Stake (USDC)</label>
-                        <input
-                          className="input"
-                          placeholder="30.00"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={brandStake}
-                          onChange={(e) => setBrandStake(e.target.value)}
-                        />
-                      </div>
+                    <div className="input-group">
+                      <label>Brand Stake</label>
+                      <input className="input" type="number" step="0.01" value={brandStake} onChange={(e) => setBrandStake(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="grid-2" style={{ gap: '0.75rem', marginTop: '0.75rem' }}>
+                    <div className="input-group">
+                      <label>Deadline (days)</label>
+                      <input className="input" type="number" value={daysFromNow} onChange={(e) => setDaysFromNow(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label>KPI threshold (bps)</label>
+                      <input className="input" type="number" value={kpiThreshold} onChange={(e) => setKpiThreshold(e.target.value)} />
                     </div>
                   </div>
                 </div>
 
-                {/* Deadline */}
-                <div className="input-group">
-                  <label>Deadline (days from now)</label>
-                  <input
-                    className="input"
-                    type="number"
-                    min="1"
-                    max="365"
-                    value={daysFromNow}
-                    onChange={(e) => setDaysFromNow(e.target.value)}
-                  />
-                  <span className="hint">
-                    Deadline: {new Date(Date.now() + parseInt(daysFromNow || '30') * 86400000).toLocaleDateString()}
-                  </span>
-                </div>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={handleStartNegotiation} disabled={negotiating}>
+                  {negotiating ? 'Starting…' : '1. Start AI negotiation session'}
+                </button>
 
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '0.5rem',
-                    padding: '0.75rem',
-                    background: 'rgba(255, 230, 0, 0.05)',
-                    border: '1px solid rgba(255, 230, 0, 0.2)',
-                    fontSize: '0.75rem',
-                    color: 'var(--text-secondary)',
-                  }}
-                >
-                  <AlertCircle size={14} style={{ color: 'var(--accent-yellow)', flexShrink: 0, marginTop: '1px' }} />
-                  <span>
-                    Both wallets must sign this transaction. Creator and Brand must use the same deal ID when depositing stakes.
-                    20% of creator stake is slashed on failed delivery.
-                  </span>
+                {session && (
+                  <div className="card card-dim" style={{ padding: '1rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                      Session #{session.id} · {session.status} · round {session.rounds}/{session.max_rounds}
+                    </div>
+                    <p style={{ fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '0.75rem' }}>{session.terms_summary}</p>
+                    {session.rounds_history?.map((r) => (
+                      <div key={r.round_num} style={{ fontSize: '0.8rem', marginBottom: '0.35rem', color: 'var(--text-secondary)' }}>
+                        <strong>{r.persona}</strong>: {r.message}
+                      </div>
+                    ))}
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7rem', wordBreak: 'break-all', marginTop: '0.5rem' }}>
+                      intent: {session.deal_intent_hash}
+                    </div>
+                    {session.status === 'negotiating' && (
+                      <button className="btn btn-sm btn-ghost" style={{ marginTop: '0.75rem' }} onClick={handleNextRound} disabled={negotiating}>
+                        Next negotiation round
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {session && (
+                  <div style={{ border: '1px solid var(--border-dim)', padding: '0.75rem' }}>
+                    <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.5rem' }}>2. Human approval (both parties)</div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <button className="btn btn-sm" onClick={() => handleApproveTerms('creator')} disabled={creatorApproved}>
+                        {creatorApproved ? '✓ Creator approved' : 'Creator approve terms'}
+                      </button>
+                      <button className="btn btn-sm" onClick={() => handleApproveTerms('brand')} disabled={brandApproved}>
+                        {brandApproved ? '✓ Brand approved' : 'Brand approve terms'}
+                      </button>
+                    </div>
+                    {termsApproved && (
+                      <div style={{ marginTop: '0.75rem', color: 'var(--accent-green)', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <CheckCircle2 size={14} /> Both parties approved — ready for on-chain steps
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {termsApproved && session && (
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={handlePostDealIntent}>
+                    3. Post DealIntent artifact (optional audit trail)
+                  </button>
+                )}
+
+                {verificationWarning && (
+                  <div style={{ padding: '0.75rem', border: '1px solid var(--accent-pink)', color: 'var(--accent-pink)', fontSize: '0.8rem' }}>
+                    {verificationWarning}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '0.5rem', padding: '0.75rem', background: 'rgba(255, 230, 0, 0.05)', border: '1px solid rgba(255, 230, 0, 0.2)', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                  <AlertCircle size={14} style={{ color: 'var(--accent-yellow)', flexShrink: 0 }} />
+                  <span>Both wallets must sign create_deal and deposit_stakes. Oracle settles after KPI review.</span>
                 </div>
 
                 <button
                   className="btn"
                   onClick={handleCreateDeal}
-                  disabled={tx.status === 'pending' || tx.status === 'building' || tx.status === 'signing'}
+                  disabled={!canCreateDeal || tx.status === 'pending' || tx.status === 'building' || tx.status === 'signing'}
                 >
-                  {tx.status === 'building' || tx.status === 'signing' || tx.status === 'pending'
-                    ? 'Processing…'
-                    : 'CREATE DEAL ON-CHAIN'}
+                  {canCreateDeal ? '4. CREATE DEAL ON-CHAIN' : 'Approve terms to enable create deal'}
                 </button>
               </div>
             </div>
@@ -318,5 +416,13 @@ export default function DealsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DealsPage() {
+  return (
+    <Suspense fallback={<div className="container" style={{ padding: '3rem' }}>Loading…</div>}>
+      <DealsPageContent />
+    </Suspense>
   );
 }
