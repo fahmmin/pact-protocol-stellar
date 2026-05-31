@@ -107,6 +107,17 @@ All smart contracts are currently live and continuously tested on the **Stellar 
 
 *You can verify all addresses on the [Stellar Expert Testnet Explorer](https://stellar.expert/explorer/testnet).*
 
+## 🌐 Branching & Public Rollout
+
+| Branch | Purpose | Deploy target |
+|--------|---------|---------------|
+| `main` | Public production (landing → demo → portal → trading) | Vercel production |
+| `develop` | Full app integration and ongoing development | Vercel preview |
+
+Production releases ship in stages controlled by `NEXT_PUBLIC_RELEASE_STAGE` (`landing`, `demo`, `portal`, `trading`). See [`docs/release/phased-rollout.md`](docs/release/phased-rollout.md) for the unlock runbook.
+
+**Local frontend:** `cd frontend && npm install && npm run dev` — landing page at `/`, product app at `/dashboard`.
+
 ## 🛠 Getting Started
 
 ### Prerequisites

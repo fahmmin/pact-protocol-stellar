@@ -49,7 +49,6 @@ export default function NavBar() {
   }
 
   const navLinks = [
-    { href: '/', label: 'Home', icon: Zap },
     { href: '/dashboard', label: 'Dashboard', icon: Activity },
     { href: '/agents', label: 'Agents', icon: Users },
     { href: '/matches', label: 'Matches', icon: Users },
@@ -64,7 +63,7 @@ export default function NavBar() {
     <nav className="navbar">
       <div className="navbar-inner">
         {/* Logo */}
-        <Link href="/" className="navbar-logo">
+        <Link href="/dashboard" className="navbar-logo">
           <Zap size={18} style={{ color: 'var(--accent-yellow)' }} />
           PACT<span>·</span>PROTOCOL
           <span style={{

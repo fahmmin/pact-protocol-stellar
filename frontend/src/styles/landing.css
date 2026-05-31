@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  .landing-page {
+    @apply bg-landing-bg text-white antialiased;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+}
+
+@layer components {
+  .landing-section-label {
+    @apply font-mono text-xs uppercase tracking-widest text-landing-muted;
+  }
+
+  .landing-card {
+    @apply rounded-xl border border-white/[0.08] bg-landing-surface/80 backdrop-blur-sm;
+  }
+
+  .landing-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-landing-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500;
+  }
+
+  .landing-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08];
+  }
+}

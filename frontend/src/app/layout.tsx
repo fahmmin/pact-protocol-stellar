@@ -1,7 +1,19 @@
 import type { Metadata } from 'next';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import '@/styles/globals.css';
-import NavBar from '@/components/NavBar';
 import { QueryProvider } from '@/components/QueryProvider';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Pact Protocol | Trustless Creator-Brand Deals on Stellar',
@@ -10,44 +22,16 @@ export const metadata: Metadata = {
   keywords: ['Stellar', 'Soroban', 'DeFi', 'Creator Economy', 'AI Agents', 'Pact Protocol'],
   openGraph: {
     title: 'Pact Protocol',
-    description: 'Every deal, proven on-chain. Stellar Testnet.',
+    description: 'Every deal, proven on-chain. Join the waitlist.',
+    type: 'website',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
+    <html lang="en" className={`${inter.variable} ${jetbrains.variable}`}>
       <body>
-        <QueryProvider>
-          <NavBar />
-          <main>{children}</main>
-          <footer
-            style={{
-              borderTop: '2px solid var(--border-dim)',
-              padding: '1.5rem',
-              textAlign: 'center',
-              fontSize: '0.72rem',
-              color: 'var(--text-muted)',
-              fontFamily: 'var(--font-mono)',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            PACT PROTOCOL · STELLAR TESTNET · ALL DEALS PROVEN ON-CHAIN ·{' '}
-            <a
-              href="https://stellar.expert/explorer/testnet"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ color: 'var(--accent-yellow)', textDecoration: 'none' }}
-            >
-              STELLAR.EXPERT ↗
-            </a>
-          </footer>
-        </QueryProvider>
+        <QueryProvider>{children}</QueryProvider>
       </body>
     </html>
   );
