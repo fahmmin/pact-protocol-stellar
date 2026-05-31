@@ -8,16 +8,20 @@ module.exports = {
     extend: {
       colors: {
         landing: {
-          bg: '#0A0A0A',
-          surface: '#111111',
-          border: 'rgba(255,255,255,0.08)',
-          muted: '#888888',
-          accent: '#FF6B2B',
-          stellar: '#00D4FF',
+          bg: '#FAFAFA',
+          surface: '#FFFFFF',
+          border: '#E5E5E5',
+          'border-light': '#F0F0F0',
+          text: '#111111',
+          nav: '#444444',
+          muted: '#666666',
+          accent: '#FF5C00',
+          'accent-hover': '#E65200',
+          stellar: '#0074FF',
         },
       },
       fontFamily: {
-        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-jakarta)', 'system-ui', 'sans-serif'],
         mono: ['var(--font-jetbrains)', 'JetBrains Mono', 'monospace'],
       },
       animation: {
@@ -34,12 +38,10 @@ module.exports = {
           '100%': { opacity: '1', transform: 'translateY(0)' },
         },
       },
-      backgroundImage: {
-        'dot-grid':
-          'radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)',
-      },
-      backgroundSize: {
-        'dot-grid': '24px 24px',
+      boxShadow: {
+        card: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)',
+        'card-lg': '0 2px 8px rgba(0,0,0,0.04), 0 16px 48px rgba(0,0,0,0.08)',
+        tab: '0 1px 2px rgba(0,0,0,0.06)',
       },
     },
   },

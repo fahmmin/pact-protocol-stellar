@@ -28,27 +28,27 @@ const testimonials = [
 
 export default function TestimonialMarquee() {
   return (
-    <section className="overflow-hidden border-y border-white/[0.06] py-16">
+    <section className="overflow-hidden border-y border-landing-border py-16">
       <div className="mb-8 text-center">
-        <p className="landing-section-label mb-2">[ Community ]</p>
-        <h2 className="text-2xl font-bold">People love building with Pact</h2>
+        <p className="landing-section-label mb-2">Community</p>
+        <h2 className="text-2xl font-bold text-landing-text">People love building with Pact</h2>
         <p className="mt-2 text-sm text-landing-muted">
           4.9 / 5 average rating · 29 testnet users · 90% would recommend
         </p>
       </div>
 
       <div className="relative">
-        <div className="flex animate-marquee gap-6">
+        <div className="flex animate-marquee gap-4">
           {[...testimonials, ...testimonials].map((t, i) => (
             <div
               key={`${t.author}-${i}`}
-              className="w-80 shrink-0 landing-card p-5"
+              className="w-80 shrink-0 rounded-2xl border border-landing-border bg-landing-surface p-5 shadow-sm"
             >
-              <p className="mb-4 text-sm leading-relaxed text-white/80">
+              <p className="mb-4 text-sm leading-relaxed text-landing-nav">
                 &ldquo;{t.quote}&rdquo;
               </p>
               <div>
-                <p className="text-sm font-medium">{t.author}</p>
+                <p className="text-sm font-medium text-landing-text">{t.author}</p>
                 <p className="text-xs text-landing-muted">{t.role}</p>
               </div>
             </div>

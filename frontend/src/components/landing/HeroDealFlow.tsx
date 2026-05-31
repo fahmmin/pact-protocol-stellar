@@ -1,93 +1,99 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageSquare, Lock, Eye, CheckCircle2 } from 'lucide-react';
+import { FileText, Lock, Eye, Wallet } from 'lucide-react';
 
-const tabs = [
+const steps = [
   {
-    id: 'negotiate',
-    label: 'Negotiate',
-    icon: MessageSquare,
-    title: 'AI agents agree terms',
-    content: `Brand Agent: "500 USDC for 3 posts, 50K views KPI"
-Creator Agent: "Accepted — 20% stake on outcome"
-→ Deal terms hashed on-chain`,
+    id: 'terms',
+    label: '1. Agree',
+    icon: FileText,
+    title: 'Both sides sign the same terms',
+    creator: 'You know exactly what you\'re delivering and what you\'ll earn.',
+    brand: 'Campaign scope and KPIs are locked before a dollar moves.',
   },
   {
     id: 'escrow',
-    label: 'Escrow',
+    label: '2. Escrow',
     icon: Lock,
-    title: 'Capital locked in DealVault',
-    content: `Brand deposits: 500 USDC
-Creator stake: 100 USDC (20%)
-Status: Active · Deal #42
-→ No intermediaries, smart contract escrow`,
+    title: 'Budget is locked before work starts',
+    creator: 'No more "we\'ll pay you after approval" — funds are already committed.',
+    brand: 'Budget stays in escrow until delivery is verified, not spent on promises.',
   },
   {
-    id: 'oracle',
-    label: 'Oracle',
+    id: 'verify',
+    label: '3. Verify',
     icon: Eye,
-    title: 'Campaign Oracle verifies',
-    content: `YouTube API: 62,400 views ✓
-Engagement rate: 4.2% ✓
-KPI threshold: 50,000 views
-→ Oracle signs settlement transaction`,
+    title: 'Delivery checked against agreed KPIs',
+    creator: 'Views, engagement, and deliverables measured objectively — not argued in DMs.',
+    brand: 'You only release payment when metrics actually hit the target.',
   },
   {
-    id: 'settle',
-    label: 'Settle',
-    icon: CheckCircle2,
-    title: 'Outcome settled on-chain',
-    content: `Result: SUCCESS
-Creator receives: 500 USDC
-Stake returned: 100 USDC
-Reputation +15 for both agents
-→ Every deal, proven on-chain`,
+    id: 'pay',
+    label: '4. Pay',
+    icon: Wallet,
+    title: 'Settlement happens automatically',
+    creator: 'Get paid the moment KPIs are met. No invoice chasing.',
+    brand: 'Close the campaign with a verified receipt, not a spreadsheet dispute.',
   },
 ] as const;
 
+type StepId = (typeof steps)[number]['id'];
+
 export default function HeroDealFlow() {
-  const [active, setActive] = useState<(typeof tabs)[number]['id']>('negotiate');
-  const current = tabs.find((t) => t.id === active)!;
+  const [active, setActive] = useState<StepId>('terms');
+  const current = steps.find((s) => s.id === active)!;
 
   return (
-    <div className="landing-card overflow-hidden">
-      <div className="flex border-b border-white/[0.06]">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            onClick={() => setActive(tab.id)}
-            className={`flex flex-1 items-center justify-center gap-2 px-3 py-3 text-xs font-medium transition sm:text-sm ${
-              active === tab.id
-                ? 'border-b-2 border-landing-accent bg-white/[0.04] text-white'
-                : 'text-landing-muted hover:text-white'
-            }`}
-          >
-            <tab.icon className="h-3.5 w-3.5" />
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={active}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2 }}
-          className="p-6"
-        >
-          <p className="mb-3 font-mono text-xs uppercase tracking-wider text-landing-accent">
-            {current.title}
+    <section id="how-it-works" className="px-4 py-20">
+      <div className="mx-auto max-w-4xl">
+        <div className="mb-10 text-center">
+          <h2 className="text-3xl font-bold text-landing-text md:text-4xl">
+            How a deal works on Pact
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-landing-muted">
+            Four steps replace the back-and-forth that slows manual sponsorships.
           </p>
-          <pre className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-landing-muted">
-            {current.content}
-          </pre>
-        </motion.div>
-      </AnimatePresence>
-    </div>
+        </div>
+
+        <div className="landing-card overflow-hidden">
+          <div className="flex overflow-x-auto border-b border-landing-border">
+            {steps.map((step) => (
+              <button
+                key={step.id}
+                type="button"
+                onClick={() => setActive(step.id)}
+                className={`flex min-w-[7rem] flex-1 items-center justify-center gap-2 px-4 py-3.5 text-sm font-medium transition ${
+                  active === step.id
+                    ? 'border-b-2 border-landing-accent bg-landing-bg text-landing-text'
+                    : 'text-landing-muted hover:text-landing-text'
+                }`}
+              >
+                <step.icon className="h-4 w-4" />
+                {step.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-6 md:p-8">
+            <h3 className="mb-6 text-lg font-semibold text-landing-text">{current.title}</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-xl border border-landing-border bg-landing-bg p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-landing-accent">
+                  For creators
+                </p>
+                <p className="text-sm leading-relaxed text-landing-muted">{current.creator}</p>
+              </div>
+              <div className="rounded-xl border border-landing-border bg-landing-bg p-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-landing-nav">
+                  For brands
+                </p>
+                <p className="text-sm leading-relaxed text-landing-muted">{current.brand}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

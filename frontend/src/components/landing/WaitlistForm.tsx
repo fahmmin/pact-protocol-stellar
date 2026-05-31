@@ -43,7 +43,7 @@ export default function WaitlistForm({ variant = 'hero' }: WaitlistFormProps) {
 
   if (status === 'success') {
     return (
-      <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-300">
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
         {message}
       </div>
     );
@@ -63,32 +63,29 @@ export default function WaitlistForm({ variant = 'hero' }: WaitlistFormProps) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
-          className="flex-1 rounded-lg border border-white/[0.12] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder:text-landing-muted focus:border-landing-accent focus:outline-none"
+          className="landing-input flex-1"
         />
         <select
           value={role}
           onChange={(e) => setRole(e.target.value as Role)}
-          className="rounded-lg border border-white/[0.12] bg-white/[0.04] px-3 py-2.5 text-sm text-white focus:border-landing-accent focus:outline-none"
+          className="landing-input sm:w-auto"
         >
-          <option value="creator">Creator</option>
-          <option value="brand">Brand</option>
-          <option value="trader">Trader</option>
-          <option value="other">Other</option>
+          <option value="creator">I&apos;m a creator</option>
+          <option value="brand">I&apos;m a brand</option>
         </select>
         <button
           type="submit"
           disabled={status === 'loading'}
-          className="landing-btn-primary shrink-0 disabled:opacity-60"
+          className="landing-btn-primary shrink-0 rounded-full disabled:opacity-60"
         >
           {status === 'loading' ? 'Joining…' : 'Join Waitlist'}
         </button>
       </div>
 
-      {/* Honeypot — hidden from users */}
       <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" />
 
       {status === 'error' && (
-        <p className="text-sm text-red-400">{message}</p>
+        <p className="text-sm text-red-600">{message}</p>
       )}
     </form>
   );

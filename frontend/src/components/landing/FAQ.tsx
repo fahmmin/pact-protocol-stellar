@@ -12,8 +12,7 @@ export default function FAQ() {
     <section id="faq" className="px-4 py-24">
       <div className="mx-auto max-w-3xl">
         <div className="mb-12 text-center">
-          <p className="landing-section-label mb-2">[ 04 / 04 ] · FAQ</p>
-          <h2 className="text-3xl font-bold">Frequently asked questions</h2>
+          <h2 className="text-3xl font-bold text-landing-text">Questions from creators &amp; brands</h2>
         </div>
 
         <div className="space-y-2">
@@ -24,7 +23,7 @@ export default function FAQ() {
                 onClick={() => setOpen(open === i ? null : i)}
                 className="flex w-full items-center justify-between px-5 py-4 text-left"
               >
-                <span className="font-medium">{faq.q}</span>
+                <span className="font-medium text-landing-text">{faq.q}</span>
                 <ChevronDown
                   className={clsx(
                     'h-4 w-4 shrink-0 text-landing-muted transition',
@@ -33,7 +32,7 @@ export default function FAQ() {
                 />
               </button>
               {open === i && (
-                <div className="border-t border-white/[0.06] px-5 py-4">
+                <div className="border-t border-landing-border px-5 py-4">
                   <p className="text-sm leading-relaxed text-landing-muted">{faq.a}</p>
                 </div>
               )}

@@ -1,80 +1,92 @@
 'use client';
 
-import { Users, Briefcase, Eye, TrendingUp, type LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import { Briefcase, Eye, TrendingUp, Users, type LucideIcon } from 'lucide-react';
 
 const features: {
-  num: string;
-  label: string;
-  tag: string;
+  id: string;
   icon: LucideIcon;
   title: string;
   description: string;
+  badge?: string;
 }[] = [
   {
-    num: '01',
-    label: 'Identity',
-    tag: '// Agent Registry //',
+    id: 'identity',
     icon: Users,
-    title: 'On-chain agent identity',
+    title: 'Agent Registry',
     description:
-      'Mint creator or brand agent profiles on Soroban. Reputation scores tracked by oracle after every deal — no self-reported metrics.',
+      'Mint creator or brand agent profiles on Soroban. Reputation tracked by oracle after every deal.',
   },
   {
-    num: '02',
-    label: 'Escrow',
-    tag: '// Deal Vault //',
+    id: 'escrow',
     icon: Briefcase,
-    title: 'Trustless capital escrow',
+    title: 'Deal Vault',
     description:
-      'Both parties stake capital on deal outcomes. Smart contract vault holds USDC until oracle verification. 20% slashed on failure.',
+      'Both parties stake capital on outcomes. Smart contract vault holds USDC until oracle verification.',
   },
   {
-    num: '03',
-    label: 'Oracle',
-    tag: '// Campaign Oracle //',
+    id: 'oracle',
     icon: Eye,
-    title: 'AI-verified settlement',
+    title: 'Campaign Oracle',
     description:
-      'Campaign Oracle tracks social KPIs and signs settlement transactions. Validation Registry logs on-chain proof of completed work.',
+      'Tracks social KPIs and signs settlement transactions. Validation Registry logs on-chain proof.',
   },
   {
-    num: '04',
-    label: 'Markets',
-    tag: '// PactTrade //',
+    id: 'markets',
     icon: TrendingUp,
-    title: 'Prediction markets on outcomes',
+    title: 'PactTrade',
     description:
-      'Trade YES/NO tokens on campaign outcomes via AMM. Community speculation layered on top of real creator-brand deals.',
+      'Trade YES/NO tokens on campaign outcomes via AMM. Community speculation on real deals.',
+    badge: 'NEW',
   },
 ];
 
+function GridIcon({ active }: { active: boolean }) {
+  return (
+    <div className="grid grid-cols-3 gap-0.5">
+      {[...Array(9)].map((_, i) => (
+        <span
+          key={i}
+          className={`h-1 w-1 rounded-sm ${active ? 'bg-landing-accent' : 'bg-landing-border'}`}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function FeatureSection() {
+  const [active, setActive] = useState('escrow');
+
   return (
     <section id="features" className="px-4 py-24">
       <div className="mx-auto max-w-6xl">
-        <div className="mb-16">
-          <p className="landing-section-label mb-2">[ 01 / 04 ] · Main Features</p>
-          <h2 className="text-3xl font-bold md:text-4xl">
-            The infrastructure layer for{' '}
-            <span className="text-landing-accent">trustless deals</span>
-          </h2>
-        </div>
-
-        <div id="how-it-works" className="grid gap-6 md:grid-cols-2">
+        <div id="how-it-works" className="mb-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature) => {
             const Icon = feature.icon;
+            const isActive = active === feature.id;
             return (
-            <div key={feature.num} className="landing-card p-6 transition hover:border-white/[0.15]">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="font-mono text-xs text-landing-muted">
-                  {feature.num} / 04
-                </span>
-                <span className="font-mono text-xs text-landing-accent">{feature.tag}</span>
-              </div>
-              <Icon className="mb-4 h-8 w-8 text-landing-stellar" />
-              <h3 className="mb-2 text-xl font-semibold">{feature.title}</h3>
-              <p className="text-sm leading-relaxed text-landing-muted">{feature.description}</p>
-            </div>
+              <button
+                key={feature.id}
+                type="button"
+                onClick={() => setActive(feature.id)}
+                className={`relative text-left transition ${
+                  isActive ? 'landing-card-active p-6' : 'rounded-2xl p-6 hover:bg-landing-bg'
+                }`}
+              >
+                {feature.badge && (
+                  <span className="absolute right-4 top-4 rounded-md bg-landing-accent/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-landing-accent">
+                    {feature.badge}
+                  </span>
+                )}
+                <div className="mb-4">
+                  <GridIcon active={isActive} />
+                </div>
+                <div className="mb-2 flex items-center gap-2">
+                  <Icon className={`h-4 w-4 ${isActive ? 'text-landing-accent' : 'text-landing-muted'}`} />
+                  <h3 className="font-semibold text-landing-text">{feature.title}</h3>
+                </div>
+                <p className="text-sm leading-relaxed text-landing-muted">{feature.description}</p>
+              </button>
             );
           })}
         </div>

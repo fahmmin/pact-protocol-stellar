@@ -2,28 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Reset brutalism globals when marketing landing is active */
+body:has(.landing-page) {
+  background-color: #fafafa;
+  color: #111111;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+}
+
+body:has(.landing-page)::before {
+  display: none;
+}
+
 @layer base {
   .landing-page {
-    @apply bg-landing-bg text-white antialiased;
-    background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
-    background-size: 24px 24px;
+    @apply bg-landing-bg text-landing-text antialiased;
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    position: relative;
+    z-index: 1;
+  }
+
+  .landing-page h1,
+  .landing-page h2,
+  .landing-page h3,
+  .landing-page h4,
+  .landing-page h5,
+  .landing-page h6 {
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-transform: none;
+  }
+
+  .landing-page a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .landing-page section[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  .landing-page button:not([class*='landing-btn']) {
+    font-family: inherit;
+    text-transform: none;
+    letter-spacing: normal;
+    cursor: pointer;
+  }
+
+  .landing-page input,
+  .landing-page select,
+  .landing-page textarea {
+    font-family: inherit;
+    text-transform: none;
   }
 }
 
 @layer components {
+  .landing-grid-bg {
+    background-color: #fafafa;
+    background-image:
+      linear-gradient(to right, #e5e5e5 1px, transparent 1px),
+      linear-gradient(to bottom, #e5e5e5 1px, transparent 1px);
+    background-size: 80px 80px;
+  }
+
   .landing-section-label {
     @apply font-mono text-xs uppercase tracking-widest text-landing-muted;
   }
 
   .landing-card {
-    @apply rounded-xl border border-white/[0.08] bg-landing-surface/80 backdrop-blur-sm;
+    @apply rounded-2xl border border-landing-border bg-landing-surface shadow-card;
+  }
+
+  .landing-card-active {
+    @apply rounded-2xl border border-landing-border bg-landing-surface shadow-card-lg;
+  }
+
+  .landing-page .landing-btn-primary {
+    color: #ffffff !important;
   }
 
   .landing-btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-landing-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-landing-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-landing-accent-hover;
   }
 
   .landing-btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/[0.08];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-landing-border bg-landing-surface px-5 py-2.5 text-sm font-medium text-landing-text transition hover:bg-landing-bg;
+  }
+
+  .landing-input {
+    @apply w-full rounded-xl border border-landing-border bg-landing-surface px-4 py-3 text-sm text-landing-text placeholder:text-landing-muted focus:border-landing-accent focus:outline-none focus:ring-2 focus:ring-landing-accent/20;
+  }
+
+  .landing-tab-active {
+    @apply rounded-lg bg-landing-surface shadow-tab;
+  }
+
+  .landing-code-key {
+    @apply text-landing-muted;
+  }
+
+  .landing-code-string {
+    @apply text-landing-accent;
+  }
+
+  .landing-code-keyword {
+    @apply text-indigo-600;
+  }
+
+  .landing-code-comment {
+    @apply text-landing-muted/70;
   }
 }

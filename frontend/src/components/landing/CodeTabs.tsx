@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Check, Copy } from 'lucide-react';
 
 const snippets = {
   cli: `# Create a deal on Stellar Testnet
@@ -38,7 +38,33 @@ const tx = await dealVault.createDeal({
 });`,
 };
 
+const outputs = {
+  cli: `$ stellar contract invoke ...
+✓ Transaction successful
+Deal ID: 42
+Status: Active
+Escrow: 500 USDC locked`,
+  rust: `// Compiled & deployed to Soroban
+Contract: DealVault
+Network: Stellar Testnet
+Method: create_deal
+Auth: creator ✓ brand ✓`,
+  ts: `// Response
+{
+  dealId: 42,
+  status: "Active",
+  escrow: "500 USDC",
+  txHash: "abc123..."
+}`,
+};
+
 type Tab = keyof typeof snippets;
+
+const tabLabels: Record<Tab, string> = {
+  cli: 'Stellar CLI',
+  rust: 'Rust',
+  ts: 'TypeScript',
+};
 
 export default function CodeTabs() {
   const [tab, setTab] = useState<Tab>('cli');
@@ -50,47 +76,70 @@ export default function CodeTabs() {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  return (
-    <section className="px-4 py-24">
-      <div className="mx-auto max-w-6xl">
-        <div className="mb-12">
-          <p className="landing-section-label mb-2">[ 02 / 04 ] · Developer First</p>
-          <h2 className="text-3xl font-bold md:text-4xl">
-            Start building on{' '}
-            <span className="text-landing-stellar">Soroban today</span>
-          </h2>
-        </div>
+  const codeLines = snippets[tab].split('\n');
 
+  return (
+    <section className="px-4 pb-24">
+      <div className="mx-auto max-w-6xl">
         <div className="landing-card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-white/[0.06] px-4">
-            <div className="flex">
+          {/* Tab bar */}
+          <div className="flex items-center justify-between border-b border-landing-border bg-landing-bg/50 px-3 py-2">
+            <div className="flex gap-1">
               {(['cli', 'rust', 'ts'] as Tab[]).map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setTab(t)}
-                  className={`px-4 py-3 font-mono text-xs uppercase tracking-wider transition ${
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
                     tab === t
-                      ? 'border-b-2 border-landing-accent text-white'
-                      : 'text-landing-muted hover:text-white'
+                      ? 'landing-tab-active text-landing-text'
+                      : 'text-landing-muted hover:text-landing-text'
                   }`}
                 >
-                  {t === 'cli' ? 'Stellar CLI' : t === 'rust' ? 'Rust' : 'TypeScript'}
+                  {tabLabels[t]}
                 </button>
               ))}
             </div>
             <button
               type="button"
               onClick={copyCode}
-              className="flex items-center gap-1.5 px-3 py-2 text-xs text-landing-muted transition hover:text-white"
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs text-landing-muted transition hover:bg-landing-surface hover:text-landing-text"
             >
               {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? 'Copied' : 'Copy code'}
             </button>
           </div>
-          <pre className="overflow-x-auto p-6 font-mono text-sm leading-relaxed text-landing-muted">
-            <code>{snippets[tab]}</code>
-          </pre>
+
+          {/* Split pane */}
+          <div className="grid md:grid-cols-2">
+            <div className="border-b border-landing-border md:border-b-0 md:border-r">
+              <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed">
+                {codeLines.map((line, i) => (
+                  <div key={i} className="flex">
+                    <span className="mr-4 w-5 shrink-0 select-none text-right text-landing-muted/50">
+                      {i + 1}
+                    </span>
+                    <code className="text-landing-text">{line}</code>
+                  </div>
+                ))}
+              </pre>
+            </div>
+            <div className="relative bg-landing-bg/30">
+              <span className="absolute right-4 top-4 font-mono text-[10px] text-landing-muted">
+                [ .OUT ]
+              </span>
+              <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed text-landing-muted">
+                {outputs[tab].split('\n').map((line, i) => (
+                  <div key={i} className="flex">
+                    <span className="mr-4 w-5 shrink-0 select-none text-right text-landing-muted/50">
+                      {i + 1}
+                    </span>
+                    <span>{line}</span>
+                  </div>
+                ))}
+              </pre>
+            </div>
+          </div>
         </div>
       </div>
     </section>

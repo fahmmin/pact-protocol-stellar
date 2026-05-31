@@ -1,4 +1,5 @@
 import LandingNav from '@/components/landing/LandingNav';
+import AnnouncementBar from '@/components/landing/AnnouncementBar';
 import JsonLd from '@/components/seo/JsonLd';
 import { LANDING_FAQS } from '@/lib/faq';
 import {
@@ -11,7 +12,7 @@ import '@/styles/landing.css';
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="landing-page min-h-screen">
+    <div className="landing-page min-h-screen font-sans">
       <JsonLd
         data={[
           organizationJsonLd(),
@@ -20,6 +21,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
           faqPageJsonLd(LANDING_FAQS),
         ]}
       />
+      <AnnouncementBar />
       <LandingNav />
       {children}
     </div>

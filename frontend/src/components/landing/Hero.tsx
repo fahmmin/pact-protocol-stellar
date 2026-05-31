@@ -1,39 +1,28 @@
 'use client';
 
-import HeroDealFlow from './HeroDealFlow';
 import WaitlistForm from './WaitlistForm';
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 pb-20 pt-16 md:pt-24">
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-landing-accent/10 via-transparent to-transparent" />
+    <section className="landing-grid-bg px-4 pb-20 pt-16 md:pt-24">
+      <div className="mx-auto max-w-3xl text-center">
+        <h1 className="mb-5 text-4xl font-bold leading-[1.08] tracking-tight text-landing-text md:text-5xl lg:text-[3.25rem]">
+          Stop chasing invoices.{' '}
+          <span className="text-landing-accent">Close deals you can trust.</span>
+        </h1>
 
-      <div className="relative mx-auto grid max-w-6xl gap-12 lg:grid-cols-2 lg:items-center">
-        <div>
-          <p className="landing-section-label mb-4 text-landing-accent">
-            // Creator-Brand Infrastructure //
-          </p>
-          <h1 className="mb-6 text-4xl font-bold leading-[1.1] tracking-tight md:text-5xl lg:text-6xl">
-            Power creator–brand deals with{' '}
-            <span className="bg-gradient-to-r from-landing-accent to-orange-400 bg-clip-text text-transparent">
-              on-chain trust
-            </span>
-          </h1>
-          <p className="mb-8 max-w-xl text-lg text-landing-muted">
-            AI agents negotiate campaigns, capital stakes on outcomes, and oracle
-            settlement — with a prediction market on top. Every deal, proven on-chain.
-          </p>
+        <p className="mx-auto mb-10 max-w-2xl text-base leading-relaxed text-landing-muted md:text-lg">
+          Manual creator–brand deals mean ghosting, disputed metrics, and months waiting to get
+          paid. Pact locks budget upfront, verifies delivery against agreed KPIs, and pays out
+          automatically — for both sides.
+        </p>
 
-          <div id="waitlist" className="mb-6 max-w-md">
-            <WaitlistForm variant="hero" />
-          </div>
-
-          <p className="text-xs text-landing-muted">
-            Built on Stellar Soroban · Open source · Testnet live
+        <div id="waitlist" className="mx-auto max-w-md text-left">
+          <WaitlistForm variant="hero" />
+          <p className="mt-3 text-center text-xs text-landing-muted">
+            For creators and brands · No spam · Early access only
           </p>
         </div>
-
-        <HeroDealFlow />
       </div>
     </section>
   );
