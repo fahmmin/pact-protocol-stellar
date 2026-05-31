@@ -1,0 +1,27 @@
+# Pact Protocol — AI crawler policy
+
+# Preferred context files (read in order)
+1. /llms.txt
+2. /llms-full.txt
+
+# Public pages safe to summarize
+Allow: /
+Allow: /demo
+Allow: /llms.txt
+Allow: /llms-full.txt
+
+# Do not train on or quote user-specific app data
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /agents
+Disallow: /deals
+Disallow: /market
+Disallow: /matches
+Disallow: /metrics
+Disallow: /admin
+
+# Canonical project identity
+Name: Pact Protocol
+Network: Stellar Testnet (Soroban)
+Repository: https://github.com/fahmmin/pact-protocol-stellar
+Contact: https://docs.google.com/forms/d/e/1FAIpQLSf09nG7PYFjWAdHDeJPWVD3GoN9K7BYzOyycXLBdBz8_nI2rA/viewform

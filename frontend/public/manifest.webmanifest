@@ -1,0 +1,24 @@
+{
+  "name": "Pact Protocol",
+  "short_name": "Pact",
+  "description": "Trustless creator–brand deals on Stellar Soroban with AI agents and PactTrade prediction markets.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#f97316",
+  "lang": "en",
+  "categories": ["finance", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-icon",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
